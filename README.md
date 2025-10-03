@@ -25,14 +25,11 @@ This repository is meant to provide an enterprise template for any standard Type
 
 Documentation [here](https://pharmaledgerassoc.github.io/ts-template/), Test results [here](https://pharmaledgerassoc.github.io/ts-template/workdocs/reports/html/test-report.html) and Coverage [here](https://pharmaledgerassoc.github.io/ts-template/workdocs/reports/coverage/lcov-report/index.html)
 
-
 ### Description
 
 No one needs the hassle of setting up new repos every time.
 
 Now you can create new repositories from this template and enjoy having everything set up for you.
-
-
 
 ### How to Use
 
@@ -48,18 +45,9 @@ Now you can create new repositories from this template and enjoy having everythi
   - [WebStorm](./workdocs/tutorials/For%20Developers.md#webstorm)
 - [Considerations](./workdocs/tutorials/For%20Developers.md#considerations)
 
-
-
-
 ### Related
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=pharmaledgerassoc&repo=ts-template)](https://github.com/pharmaledgerassoc/ts-template)
-
-
-
-
-
-
 
 #### Languages
 
@@ -87,5 +75,4 @@ So if you can, if this project in any way. either by learning something or simpl
 ## License
 
 This project is released under the [MIT License](./LICENSE.md).
-
 By developers, for developers...
