@@ -1,6 +1,6 @@
 ## Typescript Template
 
-This repository is meant to provide an enterprise template for any standard Typescript project
+This repository is meant to provide an enterprise template for any standard Typescript projects.
 
 ![Licence](https://img.shields.io/github/license/pharmaledgerassoc/ts-template.svg?style=plastic)
 ![GitHub language count](https://img.shields.io/github/languages/count/pharmaledgerassoc/ts-template?style=plastic)
