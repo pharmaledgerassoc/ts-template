@@ -1,0 +1,15 @@
+name: Run from Jira
+
+on:
+    repository_dispatcher:
+        types: [jira_ticket_in_progress]
+
+jobs:
+    run:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Print jira payload
+            run: |
+              echo "Ticket: ${{ github.event.client_payload.ticket }}"
+              echo "Summary: ${{ github.event.client_payload.summary }}"
+              echo "Status: ${{ github.even.client_payload.status }}"
