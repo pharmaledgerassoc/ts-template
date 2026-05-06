@@ -1,15 +1,17 @@
 name: Run from Jira
-
 on:
-  workflow_dispatch:
   repository_dispatch:
-
+    types:
+      - jira_ticket_in_progress
+  workflow_dispatch:
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Print full event
+      - name: Print jira payload
         run: |
           echo "Event name: ${{ github.event_name }}"
           echo "Action: ${{ github.event.action }}"
-          echo '${{ toJson(github.event) }}'
+          echo "Ticket: ${{ github.event.client_payload.ticket }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Status: ${{ github.event.client_payload.status }}"
