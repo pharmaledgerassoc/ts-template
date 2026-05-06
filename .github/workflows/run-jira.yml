@@ -1,21 +1,23 @@
 name: Run from Jira
+
 on:
   repository_dispatch:
     types:
       - jira_ticket_in_progress
   workflow_dispatch:
+
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - name: Print jira payload
         run: |
-          echo "Ticket: ${{ issue.key }}"
-          echo "Summary: ${{ issue.summary.jsonEncode }}"
-          echo "Status: ${{ issue.status.name }}"
-          echo "url: ${{ issue.url }}"
-          echo "Type: ${{ issue.issueType.name }}"
-          echo "Priority: {{ issue.priority.name }}"
-          echo "Assignee: {{ issue.assignee.dispayName }}"
-          echo "Reporter: {{ issue.reporter.displayName }}"
-          echo "Project: {{ issue.project.key }}"
+          echo "Ticket: ${{ github.event.client_payload.ticket }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Status: ${{ github.event.client_payload.status }}"
+          echo "URL: ${{ github.event.client_payload.url }}"
+          echo "Type: ${{ github.event.client_payload.type }}"
+          echo "Priority: ${{ github.event.client_payload.priority }}"
+          echo "Assignee: ${{ github.event.client_payload.assignee }}"
+          echo "Reporter: ${{ github.event.client_payload.reporter }}"
+          echo "Project: ${{ github.event.client_payload.project }}"
