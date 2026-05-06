@@ -10,8 +10,12 @@ jobs:
     steps:
       - name: Print jira payload
         run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Action: ${{ github.event.action }}"
-          echo "Ticket: ${{ github.event.client_payload.ticket }}"
-          echo "Summary: ${{ github.event.client_payload.summary }}"
-          echo "Status: ${{ github.event.client_payload.status }}"
+          echo "Ticket: ${{ issue.key }}"
+          echo "Summary: ${{ issue.summary.jsonEncode }}"
+          echo "Status: ${{ issue.status.name }}"
+          echo "url: ${{ issue.url }}"
+          echo "Type: ${{ issue.issueType.name }}"
+          echo "Priority: {{ issue.priority.name }}"
+          echo "Assignee: {{ issue.assignee.dispayName }}"
+          echo "Reporter: {{ issue.reporter.displayName }}"
+          echo "Project: {{ issue.project.key }}"
