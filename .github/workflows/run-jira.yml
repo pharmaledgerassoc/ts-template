@@ -9,7 +9,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Print jira payload
-            run: |
-              echo "Ticket: ${{ github.event.client_payload.ticket }}"
-              echo "Summary: ${{ github.event.client_payload.summary }}"
-              echo "Status: ${{ github.event.client_payload.status }}"
+              run: |
+               echo "Ticket: ${{ github.event.client_payload.ticket }}"
+               echo "Summary: ${{ github.event.client_payload.summary }}"
+               echo "Status: ${{ github.event.client_payload.status }}"
