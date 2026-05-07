@@ -20,3 +20,4 @@ jobs:
           echo "Assignee: ${{ github.event.client_payload.assignee }}"
           echo "Reporter: ${{ github.event.client_payload.reporter }}"
           echo "Project: ${{ github.event.client_payload.project }}"
+          echo "Event_name: ${{ github.event.client_payload.event_type }}"
