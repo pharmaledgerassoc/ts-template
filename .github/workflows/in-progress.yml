@@ -3,7 +3,7 @@ name: Run from In Progress
 on:
   repository_dispatch:
     types:
-      - ptp_plabug_inprogress
+      - ptp_plabug_inprogress2
 
 jobs:
   run:
