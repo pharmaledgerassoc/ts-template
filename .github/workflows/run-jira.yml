@@ -3,7 +3,7 @@ name: Run from Jira
 on:
   repository_dispatch:
     types:
-      - jira_ticket_in_progress
+      - jira_ticket_in_progress2
 
 jobs:
   run:
