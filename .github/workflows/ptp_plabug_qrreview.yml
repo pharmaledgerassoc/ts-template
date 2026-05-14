@@ -1,0 +1,151 @@
+name: Create bug pull request
+
+on:
+  repository_dispatch:
+    types:
+      - ptp_plabug_qrreview
+
+env:
+  DEFAULT_TEAMS: "quality techlead"
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    concurrency:
+      group: create-pr-${{ github.event.client_payload.branch }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Validate payload
+        run: |
+          if [ -z "${{ github.event.client_payload.branch }}" ]; then
+            echo "❌ Branch name is missing in client_payload.branch"
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Create pull request
+        id: create_pr
+        env:
+          BRANCH_NAME: ${{ github.event.client_payload.branch }}
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          EXISTING_PR=$(gh pr list \
+            --head "$BRANCH_NAME" \
+            --base "$DEFAULT_BRANCH" \
+            --json url \
+            --jq '.[0].url')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "⚠️ PR already exists: $EXISTING_PR"
+            echo "url=$EXISTING_PR" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PR_URL=$(gh pr create \
+            --base "$DEFAULT_BRANCH" \
+            --head "$BRANCH_NAME" \
+            --title "Decaf bug fix: $BRANCH_NAME" \
+            --body "Automated pull request for branch \`$BRANCH_NAME\`.")
+
+          echo "✅ PR created: $PR_URL"
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Determine required teams from CODEOWNERS
+        id: reviewers
+        env:
+          GH_TOKEN: ${{ secrets.JIRA_AUTOMATION }}
+          BRANCH_NAME: ${{ github.event.client_payload.branch }}
+          AUTHOR: ${{ github.event.client_payload.author }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch origin "$BRANCH_NAME"
+
+          CHANGED_FILES=$(git diff --name-only origin/"$DEFAULT_BRANCH"...origin/"$BRANCH_NAME")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          REQUIRED_TEAMS="$DEFAULT_TEAMS"
+
+          while IFS= read -r file; do
+            if [[ "$file" == ".github/CODEOWNERS" || "$file" == "LICENCE.md" ]]; then
+              REQUIRED_TEAMS="$REQUIRED_TEAMS administration"
+            elif [[ "$file" == .github/* ]]; then
+              REQUIRED_TEAMS="$REQUIRED_TEAMS CI-CD quality"
+            fi
+          done <<< "$CHANGED_FILES"
+
+          UNIQUE_TEAMS=$(echo "$REQUIRED_TEAMS" | tr ' ' '\n' | sort -u | grep -v '^$')
+          echo "Teams required:"
+          echo "$UNIQUE_TEAMS"
+
+          REVIEWERS=""
+          for TEAM in $UNIQUE_TEAMS; do
+            echo "Selecting reviewer from team: $TEAM"
+
+            MEMBERS=$(gh api \
+              "/orgs/decaf-ts/teams/$TEAM/members" \
+              --jq '.[].login')
+
+            REVIEWER=$(echo "$MEMBERS" | grep -v "$AUTHOR" | shuf -n 1)
+
+            if [ -z "$REVIEWER" ]; then
+              echo "⚠️ No eligible reviewer found in team: $TEAM"
+              continue
+            fi
+
+            echo "Selected reviewer: $REVIEWER"
+            REVIEWERS="$REVIEWERS,$REVIEWER"
+          done
+
+          REVIEWERS="${REVIEWERS#,}"
+          echo "Final reviewers: $REVIEWERS"
+          echo "reviewers=$REVIEWERS" >> "$GITHUB_OUTPUT"
+
+      - name: Assign reviewers
+        env:
+          GH_TOKEN: ${{ secrets.JIRA_AUTOMATION }}
+          PR_URL: ${{ steps.create_pr.outputs.url }}
+          REVIEWERS: ${{ steps.reviewers.outputs.reviewers }}
+        run: |
+          PR_NUMBER="${PR_URL##*/}"
+
+          REVIEWERS_JSON=$(printf '%s\n' "$REVIEWERS" \
+            | tr ',' '\n' \
+            | jq -R . \
+            | jq -s .)
+
+          REQUEST_BODY=$(jq -n \
+            --argjson reviewers "$REVIEWERS_JSON" \
+            '{reviewers: $reviewers}')
+
+          echo "Request body:"
+          echo "$REQUEST_BODY"
+
+          for attempt in 1 2 3 4 5; do
+            echo "🔄 Requesting reviewers, attempt $attempt..."
+
+            if echo "$REQUEST_BODY" | gh api \
+              --method POST \
+              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/requested_reviewers" \
+              --input -; then
+              echo "✅ Reviewers assigned successfully."
+              exit 0
+            fi
+
+            sleep $((attempt * 10))
+          done
+
+          echo "❌ Failed to assign reviewers after 5 attempts."
+          exit 1
