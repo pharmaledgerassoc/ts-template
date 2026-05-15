@@ -41,6 +41,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
+          git fetch origin "$BRANCH_NAME"
           EXISTING_PR=$(gh pr list \
             --head "$BRANCH_NAME" \
             --base "$DEFAULT_BRANCH" \
