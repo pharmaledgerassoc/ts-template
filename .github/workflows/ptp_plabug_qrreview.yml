@@ -69,7 +69,7 @@ jobs:
           PR_URL=$(gh pr create \
             --base "$DEFAULT_BRANCH" \
             --head "$BRANCH_NAME" \
-            --title "Decaf bug fix: $BRANCH_NAME" \
+            --title "ts-template bug fix: $BRANCH_NAME" \
             --body "Automated pull request for branch \`$BRANCH_NAME\`.")
 
           echo "✅ PR created: $PR_URL"
@@ -108,7 +108,7 @@ jobs:
             echo "Selecting reviewer from team: $TEAM"
 
             MEMBERS=$(gh api \
-              "/orgs/decaf-ts/teams/$TEAM/members" \
+              "/orgs/ts-template/teams/$TEAM/members" \
               --jq '.[].login')
 
             REVIEWER=$(echo "$MEMBERS" | grep -v "$AUTHOR" | shuf -n 1)
