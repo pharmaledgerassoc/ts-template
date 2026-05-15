@@ -48,7 +48,7 @@ jobs:
               break
             fi
             if [ "$attempt" -eq 5 ]; then
-              echo "❌ Branch not found after 5 attempts."
+              echo "❌ Branch not found after 5 attempts. "
               exit 1
             fi
             sleep $((attempt * 10))
