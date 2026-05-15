@@ -6,7 +6,7 @@ on:
       - ptp_plabug_qrreview
 
 env:
-  DEFAULT_TEAMS: "quality techlead"
+  DEFAULT_TEAMS: "Quality Tech-Leads"
 
 jobs:
   create-pr:
@@ -41,7 +41,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          git fetch origin "$BRANCH_NAME"
+          for attempt in 1 2 3 4 5; do
+            echo "🔄 Fetching branch, attempt $attempt..."
+            if git fetch origin "$BRANCH_NAME"; then
+              echo "✅ Branch found."
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "❌ Branch not found after 5 attempts."
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+
           EXISTING_PR=$(gh pr list \
             --head "$BRANCH_NAME" \
             --base "$DEFAULT_BRANCH" \
@@ -57,7 +69,7 @@ jobs:
           PR_URL=$(gh pr create \
             --base "$DEFAULT_BRANCH" \
             --head "$BRANCH_NAME" \
-            --title "Decaf bug fix: $BRANCH_NAME" \
+            --title "Ts-Template bug fix: $BRANCH_NAME" \
             --body "Automated pull request for branch \`$BRANCH_NAME\`.")
 
           echo "✅ PR created: $PR_URL"
@@ -77,14 +89,28 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED_FILES"
 
+          CODEOWNERS_FILE=".github/CODEOWNERS"
           REQUIRED_TEAMS="$DEFAULT_TEAMS"
 
-          while IFS= read -r file; do
-            if [[ "$file" == ".github/CODEOWNERS" || "$file" == "LICENCE.md" ]]; then
-              REQUIRED_TEAMS="$REQUIRED_TEAMS administration"
-            elif [[ "$file" == .github/* ]]; then
-              REQUIRED_TEAMS="$REQUIRED_TEAMS CI-CD quality"
-            fi
+          while IFS= read -r changed_file; do
+            matched_owners=""
+
+            while IFS= read -r line; do
+              [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]] && continue
+
+              pattern=$(echo "$line" | awk '{print $1}')
+              owners=$(echo "$line" | awk '{for(i=2;i<=NF;i++) printf $i" "}')
+
+              if [[ "$pattern" == "-" || "$changed_file" == $pattern || "$changed_file" == ${pattern#/}* || "$changed_file" =~ ^${pattern#/} ]]; then
+                matched_owners="$owners"
+              fi
+            done < "$CODEOWNERS_FILE"
+
+            for owner in $matched_owners; do
+              team=$(echo "$owner" | sed 's/@[^/]*\///' | sed 's/@//')
+              REQUIRED_TEAMS="$REQUIRED_TEAMS $team"
+            done
+
           done <<< "$CHANGED_FILES"
 
           UNIQUE_TEAMS=$(echo "$REQUIRED_TEAMS" | tr ' ' '\n' | sort -u | grep -v '^$')
@@ -96,7 +122,7 @@ jobs:
             echo "Selecting reviewer from team: $TEAM"
 
             MEMBERS=$(gh api \
-              "/orgs/decaf-ts/teams/$TEAM/members" \
+              "/orgs/pharmaledgerassoc/teams/$TEAM/members" \
               --jq '.[].login')
 
             REVIEWER=$(echo "$MEMBERS" | grep -v "$AUTHOR" | shuf -n 1)
