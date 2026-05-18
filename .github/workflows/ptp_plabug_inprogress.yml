@@ -27,7 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: pre-release
           fetch-depth: 0
 
       - name: Create branch if not exists
