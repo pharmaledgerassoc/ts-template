@@ -24,14 +24,14 @@ jobs:
       - name: Validate payload
         run: |
           if [ -z "${{ github.event.client_payload.branch }}" ]; then
-            echo "❌ Branch name is missing in client_payload.branch"
+            echo "Branch name is missing in client_payload.branch"
             exit 1
           fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.repository.default_branch }}
+          ref: pre-release
           fetch-depth: 0
 
       - name: Create pull request
@@ -39,16 +39,16 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.event.client_payload.branch }}
           GH_TOKEN: ${{ github.token }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          DEFAULT_BRANCH: pre-release
         run: |
           for attempt in 1 2 3 4 5; do
-            echo "🔄 Fetching branch, attempt $attempt..."
+            echo "Fetching branch, attempt $attempt..."
             if git fetch origin "$BRANCH_NAME"; then
-              echo "✅ Branch found."
+              echo "Branch found."
               break
             fi
             if [ "$attempt" -eq 5 ]; then
-              echo "❌ Branch not found after 5 attempts."
+              echo "Branch not found after 5 attempts."
               exit 1
             fi
             sleep $((attempt * 10))
@@ -61,7 +61,7 @@ jobs:
             --jq '.[0].url')
 
           if [ -n "$EXISTING_PR" ]; then
-            echo "⚠️ PR already exists: $EXISTING_PR"
+            echo "PR already exists: $EXISTING_PR"
             echo "url=$EXISTING_PR" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -72,7 +72,7 @@ jobs:
             --title "Ts-Template bug fix: $BRANCH_NAME" \
             --body "Automated pull request for branch \`$BRANCH_NAME\`.")
 
-          echo "✅ PR created: $PR_URL"
+          echo "PR created: $PR_URL"
           echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
 
       - name: Determine required teams from CODEOWNERS
@@ -81,7 +81,7 @@ jobs:
           GH_TOKEN: ${{ secrets.JIRA_AUTOMATION }}
           BRANCH_NAME: ${{ github.event.client_payload.branch }}
           AUTHOR: ${{ github.event.client_payload.author }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          DEFAULT_BRANCH: pre-release
         run: |
           git fetch origin "$BRANCH_NAME"
 
@@ -128,7 +128,7 @@ jobs:
             REVIEWER=$(echo "$MEMBERS" | grep -v "$AUTHOR" | shuf -n 1)
 
             if [ -z "$REVIEWER" ]; then
-              echo "⚠️ No eligible reviewer found in team: $TEAM"
+              echo "No eligible reviewer found in team: $TEAM"
               continue
             fi
 
@@ -161,18 +161,18 @@ jobs:
           echo "$REQUEST_BODY"
 
           for attempt in 1 2 3 4 5; do
-            echo "🔄 Requesting reviewers, attempt $attempt..."
+            echo "Requesting reviewers, attempt $attempt..."
 
             if echo "$REQUEST_BODY" | gh api \
               --method POST \
               "/repos/${{ github.repository }}/pulls/$PR_NUMBER/requested_reviewers" \
               --input -; then
-              echo "✅ Reviewers assigned successfully."
+              echo "Reviewers assigned successfully."
               exit 0
             fi
 
             sleep $((attempt * 10))
           done
 
-          echo "❌ Failed to assign reviewers after 5 attempts."
+          echo "Failed to assign reviewers after 5 attempts."
           exit 1
