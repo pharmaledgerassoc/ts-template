@@ -3,7 +3,7 @@ name: Create bug pull request
 on:
   repository_dispatch:
     types:
-      - ptp_plabug_qrreview
+      - ptp_plabug_pullrequest
 
 env:
   DEFAULT_TEAMS: "Quality Tech-Leads"
